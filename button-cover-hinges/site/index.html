@@ -149,7 +149,7 @@ tr.fam td { font: 600 12px var(--f-mono); letter-spacing: .06em; text-transform:
 
 <header class="bar">
   <div class="wrap">
-    <div class="brand"><b>Атлас петель</b><span>флип-крышка кнопки 16 мм · 24 × 27 × 7,2</span></div>
+    <div class="brand"><b>Атлас петель</b><span>плоская крышка для утопленной кнопки 16 мм · 26 × 27 × 3,3</span></div>
     <nav class="nav" id="nav" aria-label="Модели"></nav>
     <button class="cmp-btn" id="cmpBtn" type="button">Сравнить все</button>
   </div>
@@ -169,20 +169,20 @@ tr.fam td { font: 600 12px var(--f-mono); letter-spacing: .06em; text-transform:
           <button type="button" id="mPrint" aria-pressed="false">На столе принтера</button>
         </div>
         <button class="play" id="play" type="button" aria-label="Анимация открытия"><svg viewBox="0 0 16 16" id="playIcon"><path d="M3 2l11 6-11 6z"/></svg></button>
-        <div class="angle"><label for="ang">Открыта на</label><input id="ang" type="range" min="0" max="95" step="1" value="35"><output id="angOut">35°</output></div>
+        <div class="angle"><label for="ang">Открыта на</label><input id="ang" type="range" min="0" max="180" step="1" value="60"><output id="angOut">60°</output></div>
         <div class="chips">
           <button class="chip" type="button" id="tBtn" aria-pressed="true">Кнопка и панель</button>
           <button class="chip" type="button" id="tClear" aria-pressed="true">Прозрачная крышка</button>
           <button class="chip" type="button" id="tSec" aria-pressed="false">Разрез</button>
         </div>
-        <div class="secx" id="secRow" hidden><label for="secX">Плоскость X</label><input id="secX" type="range" min="-12" max="12" step="0.1" value="9.4"><output id="secOut" class="mono">9.4</output></div>
+        <div class="secx" id="secRow" hidden><label for="secX">Плоскость X</label><input id="secX" type="range" min="-13" max="13" step="0.1" value="9.0"><output id="secOut" class="mono">9.0</output></div>
       </div>
     </section>
 
     <div class="sheet" id="sheet"></div>
   </div>
   <div class="wrap" id="compare" hidden></div>
-  <div class="wrap foot">Все модели сгенерированы одним параметрическим скриптом и проверены численно: в закрытом положении и на всём ходе открытия детали не пересекаются, панель не задевается. Размеры в миллиметрах.</div>
+  <div class="wrap foot">Кнопка утоплена, поэтому рамка (1,8 мм) уже выше неё, а крышка плоская. Ствол каждой петли Ø3,3 мм, вровень с крышкой и панелью. Все модели сгенерированы одним параметрическим скриптом и проверены численно: в закрытом положении и на всём ходе открытия детали не пересекаются, панель не задевается. Размеры в миллиметрах.</div>
 </main>
 
 <script type="importmap">
@@ -203,7 +203,7 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 let MODELS = [], INFO = [], cur = null;
-const state = { mode: "asm", angle: 35, playing: false, showBtn: true, clear: true, section: false, secX: 9.4 };
+const state = { mode: "asm", angle: 60, playing: false, showBtn: true, clear: true, section: false, secX: 9.0 };
 
 /* ---------------- three.js setup ---------------- */
 const stage = $("stage");
@@ -384,7 +384,7 @@ async function showModel(m) {
     flexMeshes.forEach((fm) => staticGroup.add(fm));
   }
   $("msg").hidden = true;
-  const maxA = m.motion.type === "flex" ? 90 : m.motion.max;
+  const maxA = m.motion.type === "flex" ? m.motion.closed : m.motion.max;
   $("ang").max = String(maxA);
   if (state.angle > maxA) state.angle = maxA;
   pose();
@@ -401,7 +401,7 @@ function pose() {
   partMeshes.forEach((mesh) => applyClear(mesh.material));
   const theta = state.angle;
   if (mo.type === "flex") {
-    const alpha = print ? 0 : 90 - theta;
+    const alpha = print ? 0 : mo.closed - theta;
     bendFlex(mo, alpha);
     lidGroup.matrix.copy(flexLidMatrix(mo, alpha));
     partMeshes.forEach((mesh) => { mesh.matrix.identity(); });
@@ -436,7 +436,7 @@ function frame(force) {
   if (state.mode === "print") {
     camera.position.set(15, 88, 82); controls.target.set(15, 0, -2);
   } else {
-    camera.position.set(62, 40, 100); controls.target.set(0, 1.5, 2);
+    camera.position.set(58, 48, 92); controls.target.set(0, 3, 2);
   }
   controls.update();
 }
@@ -455,7 +455,7 @@ function tick(t) {
   const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
   if (state.playing && cur && state.mode === "asm") {
     const maxA = Number($("ang").max);
-    state.angle += dir * dt * 45;
+    state.angle += dir * dt * 70;
     if (state.angle >= maxA) { state.angle = maxA; dir = -1; }
     if (state.angle <= 0) { state.angle = 0; dir = 1; }
     pose();
@@ -484,9 +484,9 @@ function renderSheet(info, m) {
   const id = String(info.id).padStart(2, "0");
   const prev = INFO[info.id - 2], next = INFO[info.id];
   const mo = m.motion;
-  const openTo = mo.type === "flex" ? "90°" : `${mo.max}°`;
+  const openTo = `${mo.type === "flex" ? mo.closed : mo.max}°`;
   const legendHtml = [
-    ["#4a5463", "основание"], ["#cfe8ff", "крышка"],
+    ["#4a5463", "рамка"], ["#cfe8ff", "крышка"],
     ...m.parts.filter((p) => p.role === "hw").map((p) => [p.color, p.name.startsWith("filament") ? "филамент" : p.name.startsWith("magnet") ? "магниты" : p.name.startsWith("fabric") ? "ткань" : p.name.startsWith("film") ? "плёнка" : p.name.startsWith("spring") ? "пружина" : "покупное"]),
     ...(m.flexColor && m.flexColor.toLowerCase() === "#2f9e6b" ? [["#2f9e6b", "TPU"]] : []),
     ...(m.parts.some((p) => p.name === "d-pin") ? [["#f2c14e", "печатный штифт"]] : []),
@@ -528,7 +528,7 @@ function renderSheet(info, m) {
       <div class="files">${files}</div>
       <p class="hint" style="margin-top:8px">STL уже повёрнуты в положение для печати.${hasHw ? " Непечатные детали (оси, магниты, пружины, ткань) показаны только в 3D." : ""}</p>
     </section>
-    <section class="card"><div class="check">${check}<div><b>Проверено на столкновения.</b> Крышка проходит ${mo.type === "flex" ? "0–90°" : (m.check && m.check.panel_free_to > 101 ? "весь ход до 180° (если основание ещё не на панели)" : `0–${mo.max}°`)} без пересечений с основанием${mo.type === "flex" ? "" : " и панелью"}.${m.assemblyAngle ? ` Монтажный угол ${m.assemblyAngle}° тоже свободен.` : ""}</div></div></section>
+    <section class="card"><div class="check">${check}<div><b>Проверено на столкновения.</b> Крышка проходит 0–${openTo} без пересечений с рамкой и панелью и в конце ложится на панель.${m.assemblyAngle ? ` Монтажный угол ${m.assemblyAngle}° тоже свободен.` : ""}</div></div></section>
     <nav class="pager" aria-label="Листать">
       <button type="button" ${prev ? `data-go="v${String(prev.id).padStart(2, "0")}"` : "disabled"}><small>← №${prev ? String(prev.id).padStart(2, "0") : ""}</small><span>${prev ? esc(prev.title) : "—"}</span></button>
       <button type="button" ${next ? `data-go="v${String(next.id).padStart(2, "0")}"` : "disabled"}><small>№${next ? String(next.id).padStart(2, "0") : ""} →</small><span>${next ? esc(next.title) : "—"}</span></button>

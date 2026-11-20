@@ -37,11 +37,7 @@ def collisions(v):
     rep = {"max_overlap": 0.0, "at": None, "panel_free_to": None}
     mo = v["motion"]
     if mo["type"] == "rotate":
-        angles = list(range(0, int(mo["max"]) + 1, 5))
-        if v["k"].__class__.__name__ == "Knuckle" and getattr(v["k"], "pip", False):
-            angles = list(range(0, 181, 5))
-        if "assembly_angle" in v:
-            angles = list(range(0, v["assembly_angle"] + 1, 5))
+        angles = list(range(0, max(180, v.get("assembly_angle") or 0) + 1, 5))
         for a in angles:
             Mx = mat_rot_x(-a, mo["y"], mo["z"])
             # hardware-vs-hardware is skipped: e.g. a spring is one wire split into a coil and a moving leg
@@ -56,12 +52,12 @@ def collisions(v):
         rep["panel_free_to"] = free
     else:
         f = v["k"]
-        for al in range(0, 91, 5):
+        for al in range(0, 181, 5):
             Lr = apply(L, f.lid_matrix(al))
             o = vol(Lr ^ B)
             if o > rep["max_overlap"]:
-                rep["max_overlap"], rep["at"] = o, 90 - al
-        rep["panel_free_to"] = 90
+                rep["max_overlap"], rep["at"] = o, 180 - al
+        rep["panel_free_to"] = 180
     # rigid-vs-rigid in closed pose (ignores intentional press fits of hardware)
     if mo["type"] == "rotate":
         rep["closed_rigid_overlap"] = vol(union(*lid_rigid) ^ union(*base_rigid))
@@ -114,12 +110,10 @@ def build(idx, fn):
     rep = collisions(v)
     mo = dict(v["motion"])
     if mo["type"] == "rotate":
-        mo["max"] = min(rep["panel_free_to"], 100)
-        if getattr(v["k"], "pip", False):
-            mo["printAngle"] = 180
+        mo["max"] = min(rep["panel_free_to"], 180)
     rigid = [p for p in v["parts"] if p["group"] in ("base", "lid") and p["name"] != "hinge"]
     if mo["type"] == "flex":
-        closed = union(*[apply(p["solid"], v["k"].lid_matrix(90)) if p["group"] == "lid" else p["solid"] for p in rigid])
+        closed = union(*[apply(p["solid"], v["k"].lid_matrix(v["k"].CLOSED)) if p["group"] == "lid" else p["solid"] for p in rigid])
     else:
         closed = union(*[p["solid"] for p in rigid])
     bb = closed.bounding_box()
