@@ -194,7 +194,6 @@ tr.fam td { font: 600 12px var(--f-mono); letter-spacing: .06em; text-transform:
 <script type="module">
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { STLLoader } from "three/addons/loaders/STLLoader.js";
 
 const REPO = "https://github.com/vladbogun1/vladbogun1/blob/claude/3d-print-loop-design-srytjf/button-cover-hinges/site/";
 const FAMS = {
@@ -231,13 +230,29 @@ scene.add(new THREE.HemisphereLight(0xf4f8ff, 0x3a4048, 1.15));
 const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(40, 60, 80); scene.add(key);
 const rim = new THREE.DirectionalLight(0xbfe6ff, 0.6); rim.position.set(-60, 20, -40); scene.add(rim);
 
-const loader = new STLLoader();
-const geoCache = new Map();
-function loadGeo(url) {
-  if (!geoCache.has(url)) {
-    geoCache.set(url, new Promise((res, rej) => loader.load(url, (g) => { g.computeVertexNormals(); res(g); }, undefined, rej)));
-  }
-  return geoCache.get(url);
+/* meshes ship as compact JSON: int16-quantised positions + indices, base64 */
+const bundleCache = new Map(), geoCache = new Map();
+function loadBundle(url) {
+  if (!bundleCache.has(url)) bundleCache.set(url, fetch(url).then((r) => { if (!r.ok) throw new Error(url); return r.json(); }));
+  return bundleCache.get(url);
+}
+function b64(s, T) {
+  const bin = atob(s), buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  return new T(buf.buffer);
+}
+function toGeo(key, d) {
+  if (geoCache.has(key)) return geoCache.get(key);
+  const v = b64(d.v, Int16Array), idx = b64(d.i, d.i32 ? Uint32Array : Uint16Array);
+  const pos = new Float32Array(v.length);
+  for (let i = 0; i < v.length; i++) pos[i] = v[i] * d.q;
+  let g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  g.setIndex(new THREE.BufferAttribute(idx, 1));
+  g = g.toNonIndexed();
+  g.computeVertexNormals();
+  geoCache.set(key, g);
+  return g;
 }
 
 const Z2Y = new THREE.Matrix4().makeRotationX(-Math.PI / 2); // print frame (Z up) -> three (Y up)
@@ -277,8 +292,9 @@ const envMats = {
   btn: new THREE.MeshStandardMaterial({ color: 0xc9ced4, roughness: 0.25, metalness: 0.9, clippingPlanes: [clipPlane] }),
   ring: new THREE.MeshStandardMaterial({ color: 0x46d0ff, emissive: 0x1aa6e0, emissiveIntensity: 0.9, roughness: 0.4, clippingPlanes: [clipPlane] }),
 };
-Promise.all(["panel", "button", "button-ring"].map((n) => loadGeo(`models/common/${n}.stl`))).then(([p, b, r]) => {
-  env.add(new THREE.Mesh(p, envMats.panel), new THREE.Mesh(b, envMats.btn), new THREE.Mesh(r, envMats.ring));
+loadBundle("mesh/common.json").then((c) => {
+  env.add(new THREE.Mesh(toGeo("c/panel", c.panel), envMats.panel), new THREE.Mesh(toGeo("c/button", c.button), envMats.btn),
+    new THREE.Mesh(toGeo("c/ring", c["button-ring"]), envMats.ring));
 }).catch(() => {});
 
 function makeBed() {
@@ -342,7 +358,7 @@ let loadToken = 0;
 async function showModel(m) {
   const token = ++loadToken;
   $("msg").textContent = "загрузка…"; $("msg").hidden = false;
-  const geos = await Promise.all(m.parts.map((p) => loadGeo(p.file))).catch(() => null);
+  const geos = await loadBundle(`mesh/${m.vid}.json`).then((b) => m.parts.map((p) => toGeo(`${m.vid}/${p.name}`, b[p.name]))).catch(() => null);
   if (token !== loadToken) return;
   if (!geos) { $("msg").textContent = "не удалось загрузить модель"; return; }
   scene.remove(root);

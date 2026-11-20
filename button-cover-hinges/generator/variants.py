@@ -63,10 +63,14 @@ def tube(path, r, seg=10):
             c, d = a + seg, b_ + seg
             tris += [[a, c, b_], [b_, c, d]]
     for k in range(seg):
-        tris.append([c0, (k + 1) % seg, k])
-        tris.append([c1, (n - 1) * seg + k, (n - 1) * seg + (k + 1) % seg])
-    mesh = m3.Mesh(vert_properties=np.asarray(verts, dtype=np.float32), tri_verts=np.asarray(tris, dtype=np.uint32))
-    return M(mesh)
+        tris.append([c0, k, (k + 1) % seg])
+        tris.append([c1, (n - 1) * seg + (k + 1) % seg, (n - 1) * seg + k])
+    tris = np.asarray(tris, dtype=np.uint32)
+    solid = M(m3.Mesh(vert_properties=np.asarray(verts, dtype=np.float32), tri_verts=tris))
+    if solid.is_empty() or solid.volume() <= 0:
+        solid = M(m3.Mesh(vert_properties=np.asarray(verts, dtype=np.float32), tri_verts=tris[:, ::-1].copy()))
+    assert not solid.is_empty(), "tube is not manifold"
+    return solid
 
 
 # ======================================================================

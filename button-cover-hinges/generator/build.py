@@ -10,12 +10,13 @@ import time
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(__file__))
-from geo import apply, box, mat_rot_x, union, write_stl  # noqa: E402
+from geo import apply, box, mat_rot_x, mesh_payload, union, write_stl  # noqa: E402
 from common import button_dummy  # noqa: E402
 import variants  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "site"))
 MODELS = os.path.join(ROOT, "models")
+MESH = os.path.join(ROOT, "mesh")
 PANEL = box(-40, 40, -40, 40, -5, 0)
 
 
@@ -30,6 +31,9 @@ def collisions(v):
     lid_rigid = [p["solid"] for p in parts if p["group"] == "lid"]
     base_rigid = [p["solid"] for p in parts if p["group"] == "base"]
     B, L = union(*base), union(*lid)
+    BR, LR = union(*base_rigid), union(*lid_rigid)
+    hwb = [p["solid"] for p in parts if p["group"] == "hw-base"]
+    BH = union(*hwb) if hwb else None
     rep = {"max_overlap": 0.0, "at": None, "panel_free_to": None}
     mo = v["motion"]
     if mo["type"] == "rotate":
@@ -39,8 +43,9 @@ def collisions(v):
         if "assembly_angle" in v:
             angles = list(range(0, v["assembly_angle"] + 1, 5))
         for a in angles:
-            Lr = apply(L, mat_rot_x(-a, mo["y"], mo["z"]))
-            o = vol(Lr ^ B)
+            Mx = mat_rot_x(-a, mo["y"], mo["z"])
+            # hardware-vs-hardware is skipped: e.g. a spring is one wire split into a coil and a moving leg
+            o = vol(apply(L, Mx) ^ BR) + (vol(apply(LR, Mx) ^ BH) if BH is not None else 0.0)
             if o > rep["max_overlap"]:
                 rep["max_overlap"], rep["at"] = o, a
         free = 0
@@ -74,13 +79,17 @@ def build(idx, fn):
     out = os.path.join(MODELS, vid)
     os.makedirs(os.path.join(out, "print"), exist_ok=True)
     meta_parts = []
+    bundle = {}
     for p in v["parts"]:
         if p["name"] == "hinge":
             continue  # bending strip is generated live by the viewer
         fname = f"{p['name']}.stl"
         ntri = write_stl(p["solid"], os.path.join(out, fname))
+        bundle[p["name"]] = mesh_payload(p["solid"])
         meta_parts.append({"name": p["name"], "file": f"models/{vid}/{fname}", "group": p["group"],
                            "role": p["role"], "color": p["color"], "P": mat_list(p["P"]), "tris": ntri})
+    with open(os.path.join(MESH, f"{vid}.json"), "w") as fh:
+        json.dump(bundle, fh, separators=(",", ":"))
     by_name = {p["name"]: p for p in v["parts"]}
     prints = []
     for fname, names, note in v["prints"]:
@@ -132,6 +141,10 @@ def main():
     write_stl(panel, os.path.join(common, "panel.stl"))
     write_stl(btn, os.path.join(common, "button.stl"))
     write_stl(ring, os.path.join(common, "button-ring.stl"))
+    os.makedirs(MESH, exist_ok=True)
+    with open(os.path.join(MESH, "common.json"), "w") as fh:
+        json.dump({"panel": mesh_payload(panel), "button": mesh_payload(btn), "button-ring": mesh_payload(ring)}, fh,
+                  separators=(",", ":"))
     data_path = os.path.join(ROOT, "models.json")
     data = {}
     if os.path.exists(data_path):

@@ -124,3 +124,17 @@ def write_stl(solid, path):
         rec["v"] = tri
         f.write(rec.tobytes())
     return len(t)
+
+
+def mesh_payload(solid, q=0.002):
+    """Compact indexed mesh: int16-quantised positions (q mm) + uint16/uint32 indices, base64."""
+    import base64
+    mesh = solid.to_mesh()
+    v = np.asarray(mesh.vert_properties)[:, :3]
+    t = np.asarray(mesh.tri_verts).astype(np.int64)
+    qi = np.round(v / q)
+    assert np.abs(qi).max() < 32767, "model too large for int16 quantisation"
+    idx_t = np.uint16 if len(v) < 65536 else np.uint32
+    return {"q": q, "n": int(len(t)), "v": base64.b64encode(qi.astype("<i2").tobytes()).decode(),
+            "i": base64.b64encode(t.astype(idx_t).astype(idx_t().dtype.newbyteorder("<")).tobytes()).decode(),
+            "i32": idx_t is np.uint32}
