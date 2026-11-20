@@ -1,0 +1,588 @@
+<title>Атлас петель 16-мм крышки</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: workbench — sticky part-index bar on top, 3D viewport left, spec sheet right; stacks on phones. */
+:root {
+  --bg: #eef2f4;
+  --panel: #ffffff;
+  --sunk: #e3e9ed;
+  --fg: #13202a;
+  --muted: #566774;
+  --line: #d3dce2;
+  --accent: #0a7c86;
+  --accent-soft: #d5eef0;
+  --hw: #c56a12;
+  --good: #23864f;
+  --view-top: #f7fafb;
+  --view-bot: #dfe7ec;
+  --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", Roboto, Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e151a; --panel: #151f26; --sunk: #1b2730; --fg: #e2eaef; --muted: #8fa1ad; --line: #26353f;
+    --accent: #4cc5ce; --accent-soft: #163a3e; --hw: #f0a54e; --good: #5ccf8e; --view-top: #1a252d; --view-bot: #0f171c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e151a; --panel: #151f26; --sunk: #1b2730; --fg: #e2eaef; --muted: #8fa1ad; --line: #26353f;
+  --accent: #4cc5ce; --accent-soft: #163a3e; --hw: #f0a54e; --good: #5ccf8e; --view-top: #1a252d; --view-bot: #0f171c;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--f-body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1480px; margin: 0 auto; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- top bar ---------- */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); }
+.bar .wrap { padding-block: 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; }
+.brand { display: flex; flex-direction: column; gap: 0; min-width: 0; }
+.brand b { font: 800 19px/1.1 var(--f-display); letter-spacing: -0.01em; }
+.brand span { font: 12px/1.3 var(--f-mono); color: var(--muted); }
+.nav { display: flex; flex-wrap: wrap; gap: 6px 14px; flex: 1 1 520px; min-width: 0; }
+.grp { display: flex; align-items: center; gap: 4px; }
+.grp > i { font: 600 11px/1 var(--f-mono); color: var(--muted); font-style: normal; letter-spacing: 0.06em; margin-right: 2px; }
+.tile { width: 32px; height: 30px; border: 1px solid var(--line); background: var(--sunk); border-radius: 6px; cursor: pointer;
+  font: 500 13px/1 var(--f-mono); font-variant-numeric: tabular-nums; }
+.tile:hover { border-color: var(--accent); }
+.tile[aria-current="true"] { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.cmp-btn { border: 1px solid var(--line); background: transparent; border-radius: 6px; padding: 5px 12px; cursor: pointer; font-weight: 500; }
+.cmp-btn[aria-current="true"] { background: var(--fg); color: var(--panel); border-color: var(--fg); }
+
+/* ---------- main ---------- */
+main .wrap { padding-block: 18px 40px; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 960px) { main .wrap { grid-template-columns: minmax(0, 1fr); } }
+
+.viewer { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 72px); background: linear-gradient(180deg, var(--view-top), var(--view-bot));
+  border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+@media (max-width: 960px) { .viewer { position: relative; top: 0; } }
+.stage { position: relative; aspect-ratio: 4 / 3; max-width: 100%; min-height: 300px; }
+.stage canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; touch-action: none; }
+.stage .msg { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font: 13px var(--f-mono); pointer-events: none; }
+.legend { position: absolute; left: 12px; top: 10px; display: flex; flex-wrap: wrap; gap: 4px 12px; font: 12px var(--f-mono); color: var(--muted); pointer-events: none; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; border: 1px solid rgba(0,0,0,.25); }
+.modebadge { position: absolute; right: 12px; top: 10px; font: 600 11px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent);
+  background: var(--panel); border: 1px solid var(--line); padding: 6px 8px; border-radius: 6px; }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 14px; background: var(--panel); border-top: 1px solid var(--line); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; cursor: pointer; font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--panel); }
+.play { width: 36px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--sunk); cursor: pointer; display: grid; place-items: center; }
+.play svg { width: 14px; height: 14px; fill: var(--fg); }
+.angle { display: flex; align-items: center; gap: 10px; flex: 1 1 220px; min-width: 0; }
+.angle label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.angle input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.angle output { font: 500 14px var(--f-mono); min-width: 4.2ch; text-align: right; font-variant-numeric: tabular-nums; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 4px 11px; font-size: 13px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--fg); }
+.secx { display: flex; align-items: center; gap: 8px; flex: 1 1 200px; font-size: 13px; color: var(--muted); }
+.secx input { flex: 1; min-width: 0; accent-color: var(--accent); }
+
+/* ---------- spec sheet ---------- */
+.sheet { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; min-width: 0; }
+.eyebrow { font: 500 12px/1.3 var(--f-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 800 clamp(26px, 3.2vw, 34px)/1.08 var(--f-display); letter-spacing: -0.015em; margin: 6px 0 8px; text-wrap: balance; }
+.lead { margin: 0; font-size: 16px; max-width: 62ch; }
+.ratings { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: center; margin-top: 16px; }
+.ratings dt { font-size: 13px; color: var(--muted); }
+.meter { display: flex; gap: 3px; }
+.meter i { width: 26px; height: 8px; border-radius: 2px; background: var(--sunk); border: 1px solid var(--line); }
+.meter i.on { background: var(--accent); border-color: var(--accent); }
+.specs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px 18px; margin: 0; }
+.specs div { min-width: 0; }
+.specs dt { font: 500 11px/1.3 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.specs dd { margin: 3px 0 0; font: 500 15px/1.35 var(--f-body); }
+.specs dd.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+h2 { font: 700 15px/1.2 var(--f-display); margin: 0 0 8px; letter-spacing: 0; }
+.card p { margin: 0; }
+ol, ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 520px) { .two { grid-template-columns: 1fr; } }
+.pros li::marker { content: "+  "; color: var(--good); font-weight: 600; }
+.cons li::marker { content: "–  "; color: var(--hw); font-weight: 600; }
+.layers { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 12px 14px; border-radius: 0 8px 8px 0; }
+.layers b { display: block; font: 600 12px/1.3 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+.files { display: flex; flex-direction: column; gap: 8px; }
+.file { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--sunk); }
+.file code { font: 500 13px var(--f-mono); overflow-wrap: anywhere; }
+.file small { grid-column: 1 / -1; color: var(--muted); font-size: 13px; }
+.file a { font-size: 13px; color: var(--accent); white-space: nowrap; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+.check svg { flex: none; width: 18px; height: 18px; margin-top: 2px; }
+.pager { display: flex; justify-content: space-between; gap: 10px; }
+.pager button { flex: 1; border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 10px 14px; cursor: pointer; text-align: left; min-width: 0; }
+.pager button:last-child { text-align: right; }
+.pager small { display: block; color: var(--muted); font: 12px var(--f-mono); }
+.pager span { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pager button:disabled { opacity: .4; cursor: default; }
+.hint { color: var(--muted); font-size: 13px; }
+
+/* ---------- compare ---------- */
+.cmp { grid-column: 1 / -1; }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14px; }
+th, td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+th { font: 500 11px/1.3 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--sunk); position: sticky; top: 0; }
+td.n { font: 500 13px var(--f-mono); color: var(--muted); }
+td.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+tr.row { cursor: pointer; }
+tr.row:hover td { background: var(--accent-soft); }
+tr.fam td { font: 600 12px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); background: var(--panel); }
+.dots { display: inline-flex; gap: 2px; }
+.dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--sunk); border: 1px solid var(--line); }
+.dots i.on { background: var(--accent); border-color: var(--accent); }
+.foot { color: var(--muted); font-size: 13px; padding-block: 0 30px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="bar">
+  <div class="wrap">
+    <div class="brand"><b>Атлас петель</b><span>флип-крышка кнопки 16 мм · 24 × 27 × 7,2</span></div>
+    <nav class="nav" id="nav" aria-label="Модели"></nav>
+    <button class="cmp-btn" id="cmpBtn" type="button">Сравнить все</button>
+  </div>
+</header>
+
+<main>
+  <div class="wrap" id="detail">
+    <section class="viewer" aria-label="3D-модель">
+      <div class="stage" id="stage">
+        <div class="msg" id="msg">загрузка моделей…</div>
+        <div class="legend" id="legend"></div>
+        <div class="modebadge" id="modebadge">сборка</div>
+      </div>
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Режим">
+          <button type="button" id="mAsm" aria-pressed="true">Сборка</button>
+          <button type="button" id="mPrint" aria-pressed="false">На столе принтера</button>
+        </div>
+        <button class="play" id="play" type="button" aria-label="Анимация открытия"><svg viewBox="0 0 16 16" id="playIcon"><path d="M3 2l11 6-11 6z"/></svg></button>
+        <div class="angle"><label for="ang">Открыта на</label><input id="ang" type="range" min="0" max="95" step="1" value="35"><output id="angOut">35°</output></div>
+        <div class="chips">
+          <button class="chip" type="button" id="tBtn" aria-pressed="true">Кнопка и панель</button>
+          <button class="chip" type="button" id="tClear" aria-pressed="true">Прозрачная крышка</button>
+          <button class="chip" type="button" id="tSec" aria-pressed="false">Разрез</button>
+        </div>
+        <div class="secx" id="secRow" hidden><label for="secX">Плоскость X</label><input id="secX" type="range" min="-12" max="12" step="0.1" value="9.4"><output id="secOut" class="mono">9.4</output></div>
+      </div>
+    </section>
+
+    <div class="sheet" id="sheet"></div>
+  </div>
+  <div class="wrap" id="compare" hidden></div>
+  <div class="wrap foot">Все модели сгенерированы одним параметрическим скриптом и проверены численно: в закрытом положении и на всём ходе открытия детали не пересекаются, панель не задевается. Размеры в миллиметрах.</div>
+</main>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { STLLoader } from "three/addons/loaders/STLLoader.js";
+
+const REPO = "https://github.com/vladbogun1/vladbogun1/blob/claude/3d-print-loop-design-srytjf/button-cover-hinges/site/";
+const FAMS = {
+  A: "Непечатная ось", B: "Печатные детали, собираются", C: "Печать в сборе", D: "Гибкие петли", E: "Особые"
+};
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+let MODELS = [], INFO = [], cur = null;
+const state = { mode: "asm", angle: 35, playing: false, showBtn: true, clear: true, section: false, secX: 9.4 };
+
+/* ---------------- three.js setup ---------------- */
+const stage = $("stage");
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+} catch (e) {
+  $("msg").textContent = "WebGL недоступен в этом браузере";
+}
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(28, 4 / 3, 0.5, 2000);
+let controls;
+const clipPlane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), 9.4);
+if (renderer) {
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.localClippingEnabled = true;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  stage.prepend(renderer.domElement);
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+}
+scene.add(new THREE.HemisphereLight(0xf4f8ff, 0x3a4048, 1.15));
+const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(40, 60, 80); scene.add(key);
+const rim = new THREE.DirectionalLight(0xbfe6ff, 0.6); rim.position.set(-60, 20, -40); scene.add(rim);
+
+const loader = new STLLoader();
+const geoCache = new Map();
+function loadGeo(url) {
+  if (!geoCache.has(url)) {
+    geoCache.set(url, new Promise((res, rej) => loader.load(url, (g) => { g.computeVertexNormals(); res(g); }, undefined, rej)));
+  }
+  return geoCache.get(url);
+}
+
+const Z2Y = new THREE.Matrix4().makeRotationX(-Math.PI / 2); // print frame (Z up) -> three (Y up)
+let root = new THREE.Group(); scene.add(root);
+let env = new THREE.Group(); scene.add(env);
+let bed = null;
+let lidGroup = null, staticGroup = null, flexMeshes = [], partMeshes = [];
+
+function matFor(part) {
+  const isLid = part.group === "lid" && part.color.toLowerCase() === "#cfe8ff";
+  const isFlexClear = part.role === "print" && part.color.toLowerCase() === "#cfe8ff";
+  const m = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(part.color), roughness: part.role === "hw" ? 0.35 : 0.55,
+    metalness: part.role === "hw" && /#b8|#9a|#8a/i.test(part.color) ? 0.75 : 0.05,
+    side: THREE.DoubleSide, clippingPlanes: [clipPlane], clipShadows: true,
+  });
+  m.userData.clearable = isLid || isFlexClear;
+  return m;
+}
+function applyClear(m) {
+  if (!m.userData.clearable) return;
+  const on = state.clear && state.mode === "asm";
+  m.transparent = on; m.opacity = on ? 0.42 : 1; m.depthWrite = !on; m.needsUpdate = true;
+}
+function addEdges(mesh, color) {
+  const eg = new THREE.EdgesGeometry(mesh.geometry, 28);
+  const lm = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.5, clippingPlanes: [clipPlane] });
+  const l = new THREE.LineSegments(eg, lm); mesh.add(l);
+}
+function updateClip() {
+  clipPlane.constant = state.section && state.mode === "asm" ? state.secX : 1e6;
+}
+
+/* button + panel */
+const envMats = {
+  panel: new THREE.MeshStandardMaterial({ color: 0x343c44, roughness: 0.8, metalness: 0.1 }),
+  btn: new THREE.MeshStandardMaterial({ color: 0xc9ced4, roughness: 0.25, metalness: 0.9, clippingPlanes: [clipPlane] }),
+  ring: new THREE.MeshStandardMaterial({ color: 0x46d0ff, emissive: 0x1aa6e0, emissiveIntensity: 0.9, roughness: 0.4, clippingPlanes: [clipPlane] }),
+};
+Promise.all(["panel", "button", "button-ring"].map((n) => loadGeo(`models/common/${n}.stl`))).then(([p, b, r]) => {
+  env.add(new THREE.Mesh(p, envMats.panel), new THREE.Mesh(b, envMats.btn), new THREE.Mesh(r, envMats.ring));
+}).catch(() => {});
+
+function makeBed() {
+  const g = new THREE.Group();
+  const plate = new THREE.Mesh(new THREE.BoxGeometry(110, 1.2, 80), new THREE.MeshStandardMaterial({ color: 0x2b3238, roughness: 0.9 }));
+  plate.position.set(15, -0.61, -2); g.add(plate);
+  const grid = new THREE.GridHelper(110, 22, 0x5b6a75, 0x404a52); grid.position.set(15, 0.01, -2);
+  grid.material.transparent = true; grid.material.opacity = 0.55; g.add(grid);
+  return g;
+}
+
+/* flex strip (living hinge etc.), deformed on the CPU */
+function makeFlex(mo, color, clearable) {
+  const out = [];
+  for (const [x0, x1] of mo.xr) {
+    const g = new THREE.BoxGeometry(x1 - x0, mo.L, mo.t, 1, 40, 1);
+    g.translate((x0 + x1) / 2, mo.yP + mo.L / 2, mo.zm);
+    g.userData.base = g.attributes.position.array.slice();
+    const m = matFor({ color, role: "print", group: clearable ? "lid" : "flex" });
+    m.userData.clearable = false;
+    const mesh = new THREE.Mesh(g, m);
+    out.push(mesh);
+  }
+  return out;
+}
+function bendFlex(mo, alphaDeg) {
+  const a = THREE.MathUtils.degToRad(alphaDeg);
+  for (const mesh of flexMeshes) {
+    const g = mesh.geometry, src = g.userData.base, pos = g.attributes.position.array;
+    for (let i = 0; i < pos.length; i += 3) {
+      const x = src[i], y = src[i + 1], z = src[i + 2];
+      const s = Math.min(1, Math.max(0, (y - mo.yP) / mo.L)), e = z - mo.zm;
+      if (a < 1e-4) { pos[i] = x; pos[i + 1] = mo.yP + s * mo.L; pos[i + 2] = mo.zm + e; continue; }
+      const rho = mo.L / a, ph = a * s;
+      pos[i] = x;
+      pos[i + 1] = mo.yP + (rho - e) * Math.sin(ph);
+      pos[i + 2] = mo.zm + rho * (1 - Math.cos(ph)) + e * Math.cos(ph);
+    }
+    g.attributes.position.needsUpdate = true;
+    g.computeVertexNormals();
+  }
+}
+function flexLidMatrix(mo, alphaDeg) {
+  const a = THREE.MathUtils.degToRad(alphaDeg);
+  let ey, ez;
+  if (a < 1e-6) { ey = mo.yP + mo.L; ez = mo.zm; }
+  else { const rho = mo.L / a; ey = mo.yP + rho * Math.sin(a); ez = mo.zm + rho * (1 - Math.cos(a)); }
+  return new THREE.Matrix4().makeTranslation(0, ey, ez)
+    .multiply(new THREE.Matrix4().makeRotationX(a))
+    .multiply(new THREE.Matrix4().makeTranslation(0, -mo.Fy, -mo.Fz));
+}
+function rotLidMatrix(mo, deg) {
+  const a = THREE.MathUtils.degToRad(-deg);
+  return new THREE.Matrix4().makeTranslation(0, mo.y, mo.z)
+    .multiply(new THREE.Matrix4().makeRotationX(a))
+    .multiply(new THREE.Matrix4().makeTranslation(0, -mo.y, -mo.z));
+}
+
+/* ---------------- model build ---------------- */
+let loadToken = 0;
+async function showModel(m) {
+  const token = ++loadToken;
+  $("msg").textContent = "загрузка…"; $("msg").hidden = false;
+  const geos = await Promise.all(m.parts.map((p) => loadGeo(p.file))).catch(() => null);
+  if (token !== loadToken) return;
+  if (!geos) { $("msg").textContent = "не удалось загрузить модель"; return; }
+  scene.remove(root);
+  root.traverse((o) => { if (o.material && o.material.dispose) o.material.dispose(); });
+  root = new THREE.Group(); scene.add(root);
+  lidGroup = new THREE.Group(); lidGroup.matrixAutoUpdate = false;
+  staticGroup = new THREE.Group();
+  root.add(staticGroup, lidGroup);
+  partMeshes = [];
+  m.parts.forEach((p, i) => {
+    const mesh = new THREE.Mesh(geos[i], matFor(p));
+    mesh.userData.part = p;
+    mesh.matrixAutoUpdate = false;
+    addEdges(mesh, p.group.endsWith("lid") && p.role !== "hw" ? 0x1e6b74 : 0x0b0f12);
+    applyClear(mesh.material);
+    (p.group === "lid" || p.group === "hw-lid" ? lidGroup : staticGroup).add(mesh);
+    partMeshes.push(mesh);
+  });
+  flexMeshes = [];
+  if (m.motion.type === "flex") {
+    const clear = (m.flexColor || "").toLowerCase() === "#cfe8ff";
+    flexMeshes = makeFlex(m.motion, m.flexColor || "#cfe8ff", clear);
+    flexMeshes.forEach((fm) => staticGroup.add(fm));
+  }
+  $("msg").hidden = true;
+  const maxA = m.motion.type === "flex" ? 90 : m.motion.max;
+  $("ang").max = String(maxA);
+  if (state.angle > maxA) state.angle = maxA;
+  pose();
+  frame(true);
+}
+
+function pose() {
+  if (!cur) return;
+  const m = cur.model, mo = m.motion;
+  const print = state.mode === "print";
+  env.visible = !print && state.showBtn;
+  if (print) { if (!bed) { bed = makeBed(); scene.add(bed); } bed.visible = true; } else if (bed) bed.visible = false;
+  updateClip();
+  partMeshes.forEach((mesh) => applyClear(mesh.material));
+  const theta = state.angle;
+  if (mo.type === "flex") {
+    const alpha = print ? 0 : 90 - theta;
+    bendFlex(mo, alpha);
+    lidGroup.matrix.copy(flexLidMatrix(mo, alpha));
+    partMeshes.forEach((mesh) => { mesh.matrix.identity(); });
+    root.matrixAutoUpdate = false;
+    root.matrix.copy(print ? Z2Y : new THREE.Matrix4());
+  } else {
+    root.matrixAutoUpdate = false;
+    if (print) {
+      lidGroup.matrix.identity();
+      partMeshes.forEach((mesh) => mesh.matrix.fromArray(mesh.userData.part.P));
+      root.matrix.copy(Z2Y);
+    } else {
+      lidGroup.matrix.copy(rotLidMatrix(mo, theta));
+      partMeshes.forEach((mesh) => mesh.matrix.identity());
+      root.matrix.identity();
+    }
+  }
+  lidGroup.matrixWorldNeedsUpdate = true;
+  root.matrixWorldNeedsUpdate = true;
+  $("modebadge").textContent = print ? "на столе принтера" : "сборка";
+  $("angOut").textContent = `${Math.round(theta)}°`;
+  $("ang").value = String(theta);
+  $("ang").disabled = print;
+  $("play").disabled = print;
+}
+
+let lastMode = null;
+function frame(force) {
+  if (!controls) return;
+  if (!force && lastMode === state.mode) return;
+  lastMode = state.mode;
+  if (state.mode === "print") {
+    camera.position.set(15, 88, 82); controls.target.set(15, 0, -2);
+  } else {
+    camera.position.set(62, 40, 100); controls.target.set(0, 1.5, 2);
+  }
+  controls.update();
+}
+
+function resize() {
+  if (!renderer) return;
+  const r = stage.getBoundingClientRect();
+  renderer.setSize(r.width, r.height, false);
+  camera.aspect = r.width / Math.max(1, r.height);
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+
+let dir = 1, lastT = performance.now();
+function tick(t) {
+  const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
+  if (state.playing && cur && state.mode === "asm") {
+    const maxA = Number($("ang").max);
+    state.angle += dir * dt * 45;
+    if (state.angle >= maxA) { state.angle = maxA; dir = -1; }
+    if (state.angle <= 0) { state.angle = 0; dir = 1; }
+    pose();
+  }
+  if (controls) controls.update();
+  if (renderer) renderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+/* ---------------- UI ---------------- */
+function meter(n) { return `<span class="meter" aria-label="${n} из 5">${[1,2,3,4,5].map((i) => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</span>`; }
+function dots(n) { return `<span class="dots" aria-label="${n} из 5">${[1,2,3,4,5].map((i) => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</span>`; }
+const check = `<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--good)"/><path d="M5.5 10.5l3 3 6-7" stroke="var(--panel)" stroke-width="2" fill="none"/></svg>`;
+
+function renderNav() {
+  const groups = {};
+  INFO.forEach((v) => (groups[v.cat] ||= []).push(v));
+  $("nav").innerHTML = Object.entries(groups).map(([c, vs]) =>
+    `<div class="grp" title="${esc(FAMS[c])}"><i>${c}</i>${vs.map((v) =>
+      `<button class="tile" type="button" data-id="${v.id}" title="${esc(v.title)}">${String(v.id).padStart(2, "0")}</button>`).join("")}</div>`).join("");
+  $("nav").addEventListener("click", (e) => { const b = e.target.closest(".tile"); if (b) go(`v${String(b.dataset.id).padStart(2, "0")}`); });
+}
+
+function renderSheet(info, m) {
+  const id = String(info.id).padStart(2, "0");
+  const prev = INFO[info.id - 2], next = INFO[info.id];
+  const mo = m.motion;
+  const openTo = mo.type === "flex" ? "90°" : `${mo.max}°`;
+  const legendHtml = [
+    ["#4a5463", "основание"], ["#cfe8ff", "крышка"],
+    ...m.parts.filter((p) => p.role === "hw").map((p) => [p.color, p.name.startsWith("filament") ? "филамент" : p.name.startsWith("magnet") ? "магниты" : p.name.startsWith("fabric") ? "ткань" : p.name.startsWith("film") ? "плёнка" : p.name.startsWith("spring") ? "пружина" : "покупное"]),
+    ...(m.flexColor && m.flexColor.toLowerCase() === "#2f9e6b" ? [["#2f9e6b", "TPU"]] : []),
+    ...(m.parts.some((p) => p.name === "d-pin") ? [["#f2c14e", "печатный штифт"]] : []),
+  ];
+  const seen = new Set();
+  $("legend").innerHTML = legendHtml.filter(([, l]) => !seen.has(l) && seen.add(l)).map(([c, l]) => `<span><i style="background:${c}"></i>${esc(l)}</span>`).join("");
+  const files = m.prints.map((f) => `<div class="file"><code>${esc(f.name)}</code><a href="${REPO}${f.file}" target="_blank" rel="noopener">GitHub ↗</a>
+     <small>${esc(f.note)} · ${f.size.join(" × ")} мм · ${f.kb} КБ</small></div>`).join("");
+  const hasHw = m.parts.some((p) => p.role === "hw");
+  $("sheet").innerHTML = `
+    <article class="card">
+      <div class="eyebrow">${info.cat} · ${esc(FAMS[info.cat])} · №${id}</div>
+      <h1>${esc(info.title)}</h1>
+      <p class="lead">${esc(info.short)}</p>
+      <dl class="ratings">
+        <dt>Компактность</dt><dd style="margin:0">${meter(info.r.compact)}</dd>
+        <dt>Прочность по слоям</dt><dd style="margin:0">${meter(info.r.layers)}</dd>
+        <dt>Простота</dt><dd style="margin:0">${meter(info.r.ease)}</dd>
+      </dl>
+    </article>
+    <section class="card"><dl class="specs">
+      <div><dt>Петля</dt><dd class="mono">${esc(info.barrel)} мм</dd></div>
+      <div><dt>Габарит закрытой</dt><dd class="mono">${m.dims.join(" × ")} мм</dd></div>
+      <div><dt>Открывается до</dt><dd class="mono">${openTo}</dd></div>
+      <div><dt>Материал</dt><dd>${esc(info.mat)}</dd></div>
+      <div style="grid-column:1/-1"><dt>Крепёж и вставки</dt><dd>${esc(info.hw)}</dd></div>
+    </dl></section>
+    <section class="card"><h2>Как держит</h2><p>${esc(info.how)}</p></section>
+    <div class="layers"><b>Слои</b>${esc(info.layers)}</div>
+    <section class="card two">
+      <div><h2>Печать</h2><ol>${info.print.map((s) => `<li>${esc(s)}</li>`).join("")}</ol></div>
+      <div><h2>Сборка</h2><ol>${info.assembly.map((s) => `<li>${esc(s)}</li>`).join("")}</ol></div>
+    </section>
+    <section class="card two">
+      <div><h2>Плюсы</h2><ul class="pros">${info.pros.map((s) => `<li>${esc(s)}</li>`).join("")}</ul></div>
+      <div><h2>Минусы</h2><ul class="cons">${info.cons.map((s) => `<li>${esc(s)}</li>`).join("")}</ul></div>
+    </section>
+    <section class="card"><h2>Файлы для печати</h2>
+      <div class="files">${files}</div>
+      <p class="hint" style="margin-top:8px">STL уже повёрнуты в положение для печати.${hasHw ? " Непечатные детали (оси, магниты, пружины, ткань) показаны только в 3D." : ""}</p>
+    </section>
+    <section class="card"><div class="check">${check}<div><b>Проверено на столкновения.</b> Крышка проходит ${mo.type === "flex" ? "0–90°" : (m.check && m.check.panel_free_to > 101 ? "весь ход до 180° (если основание ещё не на панели)" : `0–${mo.max}°`)} без пересечений с основанием${mo.type === "flex" ? "" : " и панелью"}.${m.assemblyAngle ? ` Монтажный угол ${m.assemblyAngle}° тоже свободен.` : ""}</div></div></section>
+    <nav class="pager" aria-label="Листать">
+      <button type="button" ${prev ? `data-go="v${String(prev.id).padStart(2, "0")}"` : "disabled"}><small>← №${prev ? String(prev.id).padStart(2, "0") : ""}</small><span>${prev ? esc(prev.title) : "—"}</span></button>
+      <button type="button" ${next ? `data-go="v${String(next.id).padStart(2, "0")}"` : "disabled"}><small>№${next ? String(next.id).padStart(2, "0") : ""} →</small><span>${next ? esc(next.title) : "—"}</span></button>
+    </nav>`;
+}
+
+function renderCompare() {
+  let html = `<div class="cmp"><div class="eyebrow" style="margin-bottom:6px">Сводная таблица</div><h1 style="margin-top:0">20 петель рядом</h1>
+    <p class="lead" style="margin-bottom:14px">Нажми на строку, чтобы открыть модель в 3D. Оценки от 1 до 5.</p><div class="tbl"><table>
+    <thead><tr><th>№</th><th>Техника</th><th>Петля, мм</th><th>Компактность</th><th>Прочность по слоям</th><th>Простота</th><th>Железо</th></tr></thead><tbody>`;
+  let last = "";
+  INFO.forEach((v) => {
+    if (v.cat !== last) { html += `<tr class="fam"><td colspan="7">${v.cat} · ${esc(FAMS[v.cat])}</td></tr>`; last = v.cat; }
+    html += `<tr class="row" data-go="v${String(v.id).padStart(2, "0")}" tabindex="0"><td class="n">${String(v.id).padStart(2, "0")}</td><td><b>${esc(v.title)}</b></td><td class="mono">${esc(v.barrel)}</td>
+      <td>${dots(v.r.compact)}</td><td>${dots(v.r.layers)}</td><td>${dots(v.r.ease)}</td><td>${esc(v.hw)}</td></tr>`;
+  });
+  html += `</tbody></table></div></div>`;
+  $("compare").innerHTML = html;
+}
+
+function go(hash) { if (location.hash.slice(1) !== hash) location.hash = hash; else route(); }
+function route() {
+  const h = location.hash.slice(1);
+  const isCmp = h === "compare";
+  $("detail").hidden = isCmp; $("compare").hidden = !isCmp;
+  $("cmpBtn").setAttribute("aria-current", String(isCmp));
+  document.querySelectorAll(".tile").forEach((b) => b.setAttribute("aria-current", "false"));
+  if (isCmp) { renderCompare(); return; }
+  let n = parseInt((h.match(/^v(\d{1,2})$/) || [])[1] || "1", 10);
+  if (!(n >= 1 && n <= INFO.length)) n = 1;
+  const info = INFO[n - 1], model = MODELS.find((x) => x.id === n);
+  document.querySelector(`.tile[data-id="${n}"]`)?.setAttribute("aria-current", "true");
+  cur = { info, model };
+  renderSheet(info, model);
+  showModel(model);
+  requestAnimationFrame(resize);
+}
+
+document.addEventListener("click", (e) => {
+  const g = e.target.closest("[data-go]"); if (g && !g.disabled) { go(g.dataset.go); window.scrollTo({ top: 0, behavior: "smooth" }); }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "Enter" && e.target.matches("tr.row")) { go(e.target.dataset.go); return; }
+  if (!cur || location.hash === "#compare") return;
+  if (e.key === "ArrowRight" && cur.info.id < 20) go(`v${String(cur.info.id + 1).padStart(2, "0")}`);
+  if (e.key === "ArrowLeft" && cur.info.id > 1) go(`v${String(cur.info.id - 1).padStart(2, "0")}`);
+});
+$("cmpBtn").addEventListener("click", () => go(location.hash === "#compare" ? `v${String(cur?.info.id || 1).padStart(2, "0")}` : "compare"));
+$("ang").addEventListener("input", (e) => { state.angle = Number(e.target.value); state.playing = false; setPlayIcon(); pose(); });
+function setPlayIcon() { $("playIcon").innerHTML = state.playing ? '<path d="M3 2h4v12H3zM9 2h4v12H9z"/>' : '<path d="M3 2l11 6-11 6z"/>'; }
+$("play").addEventListener("click", () => { state.playing = !state.playing; setPlayIcon(); });
+function setMode(m) {
+  state.mode = m; state.playing = m === "asm" && state.playing; setPlayIcon();
+  $("mAsm").setAttribute("aria-pressed", String(m === "asm")); $("mPrint").setAttribute("aria-pressed", String(m === "print"));
+  pose(); frame(false);
+}
+$("mAsm").addEventListener("click", () => setMode("asm"));
+$("mPrint").addEventListener("click", () => setMode("print"));
+function toggle(btn, k, after) { btn.addEventListener("click", () => { state[k] = !state[k]; btn.setAttribute("aria-pressed", String(state[k])); after && after(); pose(); }); }
+toggle($("tBtn"), "showBtn");
+toggle($("tClear"), "clear");
+toggle($("tSec"), "section", () => { $("secRow").hidden = !state.section; });
+$("secX").addEventListener("input", (e) => { state.secX = Number(e.target.value); $("secOut").textContent = state.secX.toFixed(1); updateClip(); });
+
+Promise.all([fetch("models.json").then((r) => r.json()), fetch("info.json").then((r) => r.json())]).then(([m, i]) => {
+  MODELS = m; INFO = i;
+  renderNav();
+  window.addEventListener("hashchange", route);
+  route();
+  resize();
+}).catch(() => { $("msg").textContent = "не удалось загрузить данные"; });
+</script>
